@@ -25,7 +25,7 @@ def save_pid():
     file_obj.close()
 
 
-def daemonize():
+def daemon():
     try:
         pid = os.fork()
         if pid > 0:
@@ -47,17 +47,12 @@ def daemonize():
 
 def fork_workers():
     global max_fork
-
-    Worker.run_status
-
     while len(Worker.workers) > max_fork:
         Worker()
 
 
-
-
 do_command()
-daemonize()
+daemon()
 fork_workers()
 
 
