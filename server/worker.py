@@ -59,12 +59,13 @@ class Worker:
             else:
                 print "有", len(events), "个新事件， 开始处理......"
                 for fd, event in events:
-                    _socket = self.fd_to_socket[fd]
+                    print fd
+                    _socket = self.fd_to_socket.get(fd)
                     if _socket == self.server_socket:
                         connection, address = self.server_socket.accept()
                         print "新连接:", address
                         connection.setblocking(False)
-                        self.epoll.register(connection.fileno, select.EPOLLIN)
+                        self.epoll.register(connection.fileno(), select.EPOLLIN)
                         self.fd_to_socket[connection.fileno] = connection
                         self.message_queues[_socket] = Queue.Queue()
                     elif event & select.EPOLLHUP:
@@ -77,7 +78,7 @@ class Worker:
                         data = _socket.recv(1024)
                         if data:
                             print "收到数据:", data, "客户端:", _socket.getpeername()
-                            self.message_queues[_socket].put(data)
+                            self.fd_to_socket[fd].put(data)
                             self.epoll.modify(fd, select.EPOLLOUT)
                         elif event & select.EPOLLOUT:
                             try:
@@ -95,3 +96,4 @@ class Worker:
         self.server_socket.close()
 
 
+Worker()
