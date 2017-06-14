@@ -80,15 +80,15 @@ class Worker:
                             print "收到数据:", data, "客户端:", _socket.getpeername()
                             self.fd_to_socket[fd].put(data)
                             self.epoll.modify(fd, select.EPOLLOUT)
-                        elif event & select.EPOLLOUT:
-                            try:
-                                msg = self.message_queues[socket].get_nowait()
-                            except Queue.Empty:
-                                print _socket.getpeername(), "queue empty"
-                                self.epoll.modify(fd, select.EPOLLIN)
-                            else:
-                                print "发送数据：", data, "客户端:", _socket.getpeername()
-                                _socket.send(msg)
+                    elif event & select.EPOLLOUT:
+                        try:
+                            msg = self.message_queues[socket].get_nowait()
+                        except Queue.Empty:
+                            print _socket.getpeername(), "queue empty"
+                            self.epoll.modify(fd, select.EPOLLIN)
+                        else:
+                            print "发送数据：", data, "客户端:", _socket.getpeername()
+                            _socket.send(msg)
 
     def close(self):
         self.epoll.unregister(self.server_socket.fileno())
