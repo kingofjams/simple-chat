@@ -66,8 +66,8 @@ class Worker:
                         print "新连接:", address
                         connection.setblocking(False)
                         self.epoll.register(connection.fileno(), select.EPOLLIN)
-                        self.fd_to_socket[connection.fileno] = connection
-                        self.message_queues[_socket] = Queue.Queue()
+                        self.fd_to_socket[connection.fileno()] = connection
+                        self.message_queues[connection] = Queue.Queue()
                     elif event & select.EPOLLHUP:
                         print '客户端已经关闭连接'
                         # 注销客户句炳
@@ -78,22 +78,21 @@ class Worker:
                         data = _socket.recv(1024)
                         if data:
                             print "收到数据:", data, "客户端:", _socket.getpeername()
-                            self.fd_to_socket[fd].put(data)
+                            self.message_queues[_socket].put(data)
                             self.epoll.modify(fd, select.EPOLLOUT)
                     elif event & select.EPOLLOUT:
                         try:
-                            msg = self.message_queues[socket].get_nowait()
+                            msg = self.message_queues[_socket].get_nowait()
                         except Queue.Empty:
                             print _socket.getpeername(), "queue empty"
                             self.epoll.modify(fd, select.EPOLLIN)
                         else:
-                            print "发送数据：", data, "客户端:", _socket.getpeername()
+                            print "发送数据：", msg, "客户端:", _socket.getpeername()
                             _socket.send(msg)
 
     def close(self):
         self.epoll.unregister(self.server_socket.fileno())
         self.epoll.close()
         self.server_socket.close()
-
 
 Worker()
