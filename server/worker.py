@@ -14,14 +14,14 @@ class Worker:
 
     def __init__(self):
         # 开新的进程
-        try:
-            pid = os.fork()
-            if pid > 0:
-                sys.exit(0)
-        except OSError, e:
-            sys.stdout.write('fork #1 failed: %d (%s)\n' % (e.errno, e.strerror))
-            sys.exit(1)
-        self.workers.append(pid)
+        # try:
+        #     pid = os.fork()
+        #     if pid > 0:
+        #         sys.exit(0)
+        # except OSError, e:
+        #     sys.stdout.write('fork #1 failed: %d (%s)\n' % (e.errno, e.strerror))
+        #     sys.exit(1)
+        # self.workers.append(pid)
         # 这里epoll只能在linux下才能使用
         self.epoll = select.epoll(self.time_out)
         self.message_queues = {}
@@ -66,6 +66,7 @@ class Worker:
                         print "新连接:", address
                         connection.setblocking(False)
                         self.epoll.register(connection.fileno(), select.EPOLLIN)
+                        self.epoll.register(connection.fileno(), select.EPOLLHUP)
                         self.fd_to_socket[connection.fileno()] = connection
                         self.message_queues[connection] = Queue.Queue()
                     elif event & select.EPOLLHUP:
@@ -75,6 +76,7 @@ class Worker:
                         self.fd_to_socket[fd].close()
                         del [fd]
                     elif event & select.EPOLLIN:
+                        print '进入可读'
                         data = _socket.recv(1024)
                         if data:
                             print "收到数据:", data, "客户端:", _socket.getpeername()
