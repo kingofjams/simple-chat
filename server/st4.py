@@ -45,14 +45,13 @@ def on_open_safari_response(_recv):
 
 
 def on_open_chrome_response(_recv):
-    if _recv.find('\r\n\r\n') != -1:
-        header, data = _recv.split('\r\n\r\n', 1)
-        for line in header.split("\r\n")[1:]:
-            key, value = line.split(": ", 1)
-            headers[key] = value
-        headers["Location"] = "ws://0.0.0.0:8090"
-        key1 = headers["Sec-WebSocket-Key1"]
-        key2 = headers["Sec-WebSocket-Key2"]
+    handshake = '\
+        HTTP/1.1 101 Web Socket Protocol Handshake\r\n \
+        Upgrade: WebSocket\r\n \
+        Connection: Upgrade\r\n \
+        Sec-WebSocket-Accept: %s\r\n \
+        Sec-WebSocket-Protocol: %s\r\n\r\n \
+        ' %
 
 
 if __name__ == '__main__':
