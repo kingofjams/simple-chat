@@ -124,7 +124,8 @@ Sec-WebSocket-Accept: %s\r\n\r\n' % token)
                                     self.message_queues[event_socket].put('登录成功！')
                             elif obj_accept['action'] == 'send':
                                 fd = self.uid_fd[int(obj_accept['send_to'])]
-                                msg = obj_accept['name'], '发消息给你：</br>', obj_accept['msg']
+                                msg = obj_accept['name'] + '发消息给你：</br>' + obj_accept['msg']
+                                print msg
                                 self.message_queues[self.fd_to_socket[fd]].put(msg)
                             else:
                                 print '读到的信息为:', _accept
