@@ -6,6 +6,7 @@ import sys
 import re
 import base64
 import hashlib
+import json
 
 
 class Worker:
@@ -13,6 +14,7 @@ class Worker:
     ip = '0.0.0.0'
     port = 8090
     time_out = 10
+    get_uid_by_name = {'chench':1, 'huangb':2}
 
     def __init__(self):
         # 开新的进程
@@ -28,6 +30,7 @@ class Worker:
         self.epoll = select.epoll(self.time_out)
         self.message_queues = {}
         self.fd_to_socket = {}
+        self.uid_fd = {}
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         except Exception, e:
@@ -52,7 +55,7 @@ class Worker:
         except Exception, e:
             sys.stdout.write('创建socket失败! %s\n' % str(e))
 
-    def parse_data(msg):
+    def parse_data(self, msg):
         v = ord(msg[1]) & 0x7f
         if v == 0x7e:
             p = 4
@@ -108,8 +111,24 @@ Connection: Upgrade\r\n\
 Sec-WebSocket-Accept: %s\r\n\r\n' % token)
                         else:
                             _accept = self.parse_data(_accept)
-                            print '读到的信息为:', _accept
-                            self.message_queues[event_socket].put(_accept)
+                            # print _accept
+                            # obj_accept = json.dumps(_accept)
+                            obj_accept = eval(_accept)
+                            if obj_accept['action'] == 'login':
+                                if not self.get_uid_by_name.has_key(obj_accept['name']):
+                                    self.message_queues[event_socket].put('登录的用户错误！')
+                                else:
+                                    uid = self.get_uid_by_name[obj_accept['name']]
+                                    self.uid_fd[uid] = fd
+                                    print self.uid_fd
+                                    self.message_queues[event_socket].put('登录成功！')
+                            elif obj_accept['action'] == 'send':
+                                fd = self.uid_fd[int(obj_accept['send_to'])]
+                                msg = obj_accept['name'], '发消息给你：</br>', obj_accept['msg']
+                                self.message_queues[self.fd_to_socket[fd]].put(msg)
+                            else:
+                                print '读到的信息为:', _accept
+                                self.message_queues[event_socket].put(_accept)
                             self.epoll.modify(fd, select.EPOLLOUT)
                     else:
                         print '断开连接'
