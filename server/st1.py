@@ -1,10 +1,6 @@
-# -*- coding: UTF-8 -*-
-import socket
+import user
 
-user_id = 1111
-user_name = ''
-address = ('0.0.0.0', 8090)
-
-_client1 = socket.socket()
-_client1.connect(address)
-
+u1 = user.User(1)
+print u1.status
+u2 = user.User(2)
+print u2.status
