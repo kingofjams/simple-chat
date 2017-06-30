@@ -62,6 +62,11 @@ class AbstractSocket(object):
                     conn = self.fd_conn[fd]
                     self.ev_write(conn)
 
+    def close(self):
+        self.epoll.unregister(self.server_socket.fileno())
+        self.epoll.close()
+        self.server_socket.close()
+
     @abstractmethod
     def ev_connect(self, conn): pass
 

@@ -6,7 +6,6 @@ class User:
     users = {}
 
     def __init__(self, user_id):
-        # 初始化
         self.online = 0
         self.connection = object
         self.user_id = user_id
