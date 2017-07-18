@@ -1,11 +1,11 @@
 # -*- coding: UTF-8 -*-
-import abstractScoket
+from abstractScoket import AbstractSocket
 import re
 import base64
 import hashlib
 
 
-class WebSocket(abstractScoket):
+class WebSocket(AbstractSocket):
     def ev_connect(self, conn): pass
 
     def ev_read(self, conn):

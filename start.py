@@ -1,19 +1,31 @@
 # -*- coding: UTF-8 -*-
 import sys
 import os
+import signal
 from server.worker import Worker
 pid_path = 'pid'
 max_fork = 4
+to_close = False
 command = sys.argv[1]
 
 
 def do_command():
     global command
+    global pid_path
+    global to_close
     if 'start' == command:
         print '启动中！'
     elif 'stop' == command:
         print '关闭中!'
-        exit(0)
+
+        # 获取主进程
+        file_object = open(pid_path)
+        try:
+            main_pid = file_object.read()
+        finally:
+            file_object.close()
+        os.kill(int(main_pid), signal.SIGTERM)
+        to_close = True
 
 
 def save_pid():
@@ -50,9 +62,24 @@ def fork_workers():
     while len(Worker.workers) > max_fork:
         Worker()
 
+def monitor_worker():
+    global to_close
+    while True:
+        if to_close:
+            # 杀死所有子进程
+            # 退出当前进程
+            for workers in Worker.workers:
+                os.kill(workers.pid, signal.SIGTERM)
+
+        for workers in Worker.workers:
+
+
 
 do_command()
 daemon()
 fork_workers()
+set_sign
+monitor_worker()
+
 
 
