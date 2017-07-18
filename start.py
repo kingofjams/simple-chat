@@ -4,7 +4,7 @@ import os
 import signal
 from server.worker import Worker
 pid_path = 'pid'
-max_fork = 4
+max_fork = 1
 to_close = False
 command = sys.argv[1]
 
@@ -19,13 +19,14 @@ def do_command():
         print '关闭中!'
 
         # 获取主进程
-        file_object = open(pid_path)
+        complete = '/tmp/' + pid_path
+        file_object = open(complete)
         try:
             main_pid = file_object.read()
         finally:
             file_object.close()
         os.kill(int(main_pid), signal.SIGTERM)
-        to_close = True
+        os._exit(0)
 
 
 def save_pid():
@@ -45,22 +46,45 @@ def daemon():
     except OSError, e:
         sys.stdout.write('fork #1 failed: %d (%s)\n' % (e.errno, e.strerror))
         sys.exit(1)
-    os.chdir('/')
+    os.setsid()
     os.umask(0)
-    os.setgid(pid)
+    os.chdir('/tmp')
     try:
         if pid > 0:
             sys.exit(0)
     except OSError, e:
         sys.stdout.write('fork #2 failed: %d (%s)\n' % (e.errno, e.strerror))
         sys.exit(1)
-    save_pid()
+
+
+def set_signal():
+    signal.signal(signal.SIGCHLD, chldHandler)
+    signal.signal(signal.SIGTERM, termHandler)
+
+
+def chldHandler():
+    while 1:
+        try:
+            result = os.waitpid(-1, os.WNOHANG)
+        except:
+            break
+        print 'Reaped child process %d' % result[0]
+
+
+def termHandler():
+    global to_close
+    to_close = True
+    for workers in Worker.workers:
+        os.kill(workers.pid, signal.SIGTERM)
+    os.wait()
+    os._exit(0)
 
 
 def fork_workers():
     global max_fork
-    while len(Worker.workers) > max_fork:
+    while len(Worker.workers) < max_fork:
         Worker()
+
 
 def monitor_worker():
     global to_close
@@ -70,15 +94,16 @@ def monitor_worker():
             # 退出当前进程
             for workers in Worker.workers:
                 os.kill(workers.pid, signal.SIGTERM)
-
-        for workers in Worker.workers:
-
+            os.wait()
+            os._exit(0)
+        fork_workers()
 
 
 do_command()
 daemon()
+save_pid()
+set_signal()
 fork_workers()
-set_sign
 monitor_worker()
 
 
