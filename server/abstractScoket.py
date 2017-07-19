@@ -13,7 +13,7 @@ class AbstractSocket(object):
         self.port = port
         self.time_out = 10
         self.epoll = select.epoll(self.time_out)
-        self.fd_conn = []
+        self.fd_conn = {}
         try:
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         except Exception, e:
@@ -44,7 +44,7 @@ class AbstractSocket(object):
                 continue
             for fd, event in events:
                 if fd == self.server_socket.fileno():
-                    conn = self.server_socket.accept()
+                    conn,address = self.server_socket.accept()
                     fd = conn.fileno()
                     self.fd_conn[fd] = conn
                     self.ev_connect(conn)
@@ -57,7 +57,7 @@ class AbstractSocket(object):
                 elif event & select.EPOLLIN:
                     conn = self.fd_conn[fd]
                     self.ev_read(conn)
-                    self.epoll.register(fd, select.EPOLLIN)
+                    self.epoll.register(fd, select.EPOLLOUT)
                 elif event & select.EPOLLOUT:
                     conn = self.fd_conn[fd]
                     self.ev_write(conn)

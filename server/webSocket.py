@@ -6,7 +6,9 @@ import hashlib
 
 
 class WebSocket(AbstractSocket):
-    def ev_connect(self, conn): pass
+    def ev_connect(self, conn):
+        print '有新的连接出现'
+        pass
 
     def ev_read(self, conn):
         _recv = conn.recv(1024)
