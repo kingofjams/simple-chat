@@ -7,6 +7,7 @@ pid_path = 'pid'
 max_fork = 1
 to_close = False
 command = sys.argv[1]
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 
 
 def do_command():
@@ -14,9 +15,9 @@ def do_command():
     global pid_path
     global to_close
     if 'start' == command:
-        print '启动中！'
+        print('启动中！')
     elif 'stop' == command:
-        print '关闭中!'
+        print('关闭中!')
 
         # 获取主进程
         complete = '/tmp/' + pid_path
@@ -26,7 +27,7 @@ def do_command():
         finally:
             file_object.close()
         os.kill(int(main_pid), signal.SIGTERM)
-        os._exit(0)
+        sys.exit(0)
 
 
 def save_pid():
@@ -43,7 +44,7 @@ def daemon():
         pid = os.fork()
         if pid > 0:
             sys.exit(0)
-    except OSError, e:
+    except OSError as e:
         sys.stdout.write('fork #1 failed: %d (%s)\n' % (e.errno, e.strerror))
         sys.exit(1)
     os.setsid()
@@ -52,7 +53,7 @@ def daemon():
     try:
         if pid > 0:
             sys.exit(0)
-    except OSError, e:
+    except OSError as e:
         sys.stdout.write('fork #2 failed: %d (%s)\n' % (e.errno, e.strerror))
         sys.exit(1)
 
@@ -68,7 +69,7 @@ def chldHandler():
             result = os.waitpid(-1, os.WNOHANG)
         except:
             break
-        print 'Reaped child process %d' % result[0]
+        print('Reaped child process %d' % result[0])
 
 
 def termHandler():
@@ -77,7 +78,7 @@ def termHandler():
     for workers in Worker.workers:
         os.kill(workers.pid, signal.SIGTERM)
     os.wait()
-    os._exit(0)
+    sys.exit(0)
 
 
 def fork_workers():
@@ -95,7 +96,7 @@ def monitor_worker():
             for workers in Worker.workers:
                 os.kill(workers.pid, signal.SIGTERM)
             os.wait()
-            os._exit(0)
+            sys.exit(0)
         fork_workers()
 
 

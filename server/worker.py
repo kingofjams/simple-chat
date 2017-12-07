@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 import socket
 import select
-import Queue
 import sys
 import os
 import re
@@ -22,7 +21,7 @@ class Worker:
     def fork_one_worker(self):
         try:
             pid = os.fork()
-        except OSError, e:
+        except OSError as e:
             sys.stdout.write('fork #1 failed: %d (%s)\n' % (e.errno, e.strerror))
             sys.exit(1)
         if pid > 0:
