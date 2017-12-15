@@ -2,11 +2,10 @@
 import socket
 import select
 import sys
-from abc import ABCMeta, abstractmethod
+from absEvent import AbsEvent
 
 
-class AbstractSocket(object):
-    __metaclass__ = ABCMeta
+class XtEpoll:
 
     def __init__(self, ip='0.0.0.0', port=8090):
         self.ip = ip
@@ -47,35 +46,23 @@ class AbstractSocket(object):
                     conn, address = self.server_socket.accept()
                     fd = conn.fileno()
                     self.fd_conn[fd] = conn
-                    self.ev_connect(conn)
+                    AbsEvent.ev_connect(conn)
                     self.epoll.register(fd, select.EPOLLIN)
                 elif event & select.EPOLLHUP:
-                    conn = self.ev_hup[fd]
+                    conn = self.fd_conn[fd]
+                    self.epoll.unregister(fd)
                     conn.close()
                     self.fd_conn.pop(fd)
-                    self.ev_hup(conn)
+                    AbsEvent.ev_hup(conn)
                 elif event & select.EPOLLIN:
                     conn = self.fd_conn[fd]
-                    self.ev_read(conn)
+                    AbsEvent.ev_read(conn)
                     self.epoll.register(fd, select.EPOLLOUT)
                 elif event & select.EPOLLOUT:
                     conn = self.fd_conn[fd]
-                    self.ev_write(conn)
+                    AbsEvent.ev_write(conn)
 
     def close(self):
         self.epoll.unregister(self.server_socket.fileno())
         self.epoll.close()
         self.server_socket.close()
-
-    @abstractmethod
-    def ev_connect(self, conn): pass
-
-    @abstractmethod
-    def ev_read(self, conn): pass
-
-    @abstractmethod
-    def ev_write(self, conn, msg): pass
-
-    @abstractmethod
-    def ev_hup(self, conn): pass
-

@@ -1,13 +1,16 @@
 # -*- coding: UTF-8 -*-
+import socket
 import sys
 import os
 import signal
 from server.worker import Worker
+print('fjj')
+sys.exit(0)
 pid_path = 'pid'
 max_fork = 1
 to_close = False
 command = sys.argv[1]
-sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
+sys.path.insert(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'server'))
 
 
 def do_command():
