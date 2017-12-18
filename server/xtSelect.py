@@ -11,12 +11,12 @@ class XtSelect:
     def __init__(self, ip='0.0.0.0', port=8090):
         self.ip = ip
         self.port = port
+        self.server_socket = socket.socket()
         self.output_list = []
         self.input_list = []
         self.message_queue = {}
         self.create_socket()
         self.ep_read()
-        self.server_socket = socket.socket()
 
     def create_socket(self):
         try:
@@ -48,8 +48,17 @@ class XtSelect:
                     # 所以判断是否是客户端对象触发
                     try:
                         if obj not in self.output_list:
-                            self.output_list.append(obj)
-                        AbsEvent.ev_read(obj)
+                            recvs = obj.recv(1024)
+                            if not recvs:
+                                # 客户端断开连接了，将客户端的监听从input列表中移除
+                                self.input_list.remove(obj)
+                                # 移除客户端对象的消息队列
+                                del self.message_queue[obj]
+                                AbsEvent.ev_hup(obj)
+                            else:
+                                print(recvs)
+                                self.output_list.append(obj)
+                                AbsEvent.ev_read(obj)
                     except ConnectionResetError:
                         # 客户端断开连接了，将客户端的监听从input列表中移除
                         self.input_list.remove(obj)
