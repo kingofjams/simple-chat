@@ -14,7 +14,6 @@ class XtSelect:
         self.server_socket = socket.socket()
         self.output_list = []
         self.input_list = []
-        self.message_queue = {}
         self.create_socket()
         self.ep_read()
 
@@ -40,8 +39,6 @@ class XtSelect:
                     conn, addr = self.server_socket.accept()
                     # 将客户端对象也加入到监听的列表中, 当客户端发送消息时 select 将触发
                     self.input_list.append(conn)
-                    # 为连接的客户端单独创建一个消息队列，用来保存客户端发送的消息
-                    self.message_queue[conn] = queue.Queue()
                     AbsEvent.ev_connect(conn)
                 else:
                     # 由于客户端连接进来时服务端接收客户端连接请求，将客户端加入到了监听列表中(input_list)，客户端发送消息将触发
@@ -52,8 +49,6 @@ class XtSelect:
                             if not recvs:
                                 # 客户端断开连接了，将客户端的监听从input列表中移除
                                 self.input_list.remove(obj)
-                                # 移除客户端对象的消息队列
-                                del self.message_queue[obj]
                                 AbsEvent.ev_hup(obj)
                             else:
                                 print(recvs)
@@ -62,8 +57,6 @@ class XtSelect:
                     except ConnectionResetError:
                         # 客户端断开连接了，将客户端的监听从input列表中移除
                         self.input_list.remove(obj)
-                        # 移除客户端对象的消息队列
-                        del self.message_queue[obj]
                         print("\n[input] Client  {0} disconnected".format(addr))
 
                         # 如果现在没有客户端请求,也没有客户端发送消息时，开始对发送消息列表进行处理，是否需要发送消息
